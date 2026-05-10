@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  backend:
+    build: ./backend
+    container_name: voice-agent-backend
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+    networks:
+      - voice-agent-net
+
+  frontend:
+    build: ./frontend
+    container_name: voice-agent-frontend
+    ports:
+      - "5173:5173"
+    env_file:
+      - ./frontend/.env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - voice-agent-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: voice-agent-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - voice-agent-net
+
+networks:
+  voice-agent-net:
+    driver: bridge
