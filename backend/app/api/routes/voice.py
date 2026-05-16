@@ -15,10 +15,10 @@ async def transcribe(
     if not audio_bytes:
         raise HTTPException(status_code=400, detail="Empty audio file received.")
 
-    if len(audio_bytes) > 25 * 1024 * 1024:
-        raise HTTPException(status_code=413, detail="Audio file too large. Max 25MB.")
+    if len(audio_bytes) > 4 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Audio file too large. Max 4MB.")
 
-    # Accept any audio type — no whitelist, let ffmpeg handle conversion
+    # Accept any audio type supported by OpenAI audio transcription.
     content_type = audio.content_type or "audio/webm"
 
     try:

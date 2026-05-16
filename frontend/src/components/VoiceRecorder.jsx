@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback } from "react";
-import useAudioRecorder from "../hooks/useAudioRecorder";
+import useAudioRecorder from "../hooks/useAudiorecorder";
 
 export default function VoiceRecorder({ onAudioReady, disabled }) {
     const {

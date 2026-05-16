@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { v4 as uuidv4 } from "uuid";
 import VoiceRecorder from "../components/VoiceRecorder";
 import TranscriptPanel from "../components/TransscriptPannel";
-import AudioPlayer from "../components/AudioPlayer";
+import AudioPlayer from "../components/Audioplayer";
 import StatusIndicator from "../components/StatusIndicator";
 import useWebSocket from "../hooks/usewebsocket";
 import { transcribeAudio, sendToLLM, synthesizeSpeech, clearHistory } from "../services/api";
@@ -14,6 +14,7 @@ export default function AgentPage() {
     const [audioUrl, setAudioUrl] = useState(null);
     const [useWS, setUseWS] = useState(false); // start in REST mode — safer default
     const [errorMessage, setErrorMessage] = useState("");
+    const enableWebSocketMode = import.meta.env.DEV;
 
     const addMessage = (role, content) =>
         setMessages(prev => [...prev, { id: uuidv4(), role, content, timestamp: Date.now() }]);
@@ -62,7 +63,7 @@ export default function AgentPage() {
     // ── Audio ready ────────────────────────────────────────────────────────────
     const handleAudioReady = useCallback(async (blob) => {
         setErrorMessage("");
-        if (useWS && connected) {
+        if (enableWebSocketMode && useWS && connected) {
             setStatus("transcribing");
             sendAudio(blob);
             return;
@@ -88,7 +89,7 @@ export default function AgentPage() {
             setStatus("error");
             setTimeout(() => setStatus("idle"), 5000);
         }
-    }, [useWS, connected, sendAudio, sessionId]);
+    }, [enableWebSocketMode, useWS, connected, sendAudio, sessionId]);
 
     const handleClear = async () => {
         setMessages([]);
@@ -118,13 +119,15 @@ export default function AgentPage() {
                     </h1>
                     <div className="mono" style={{ fontSize: "10px", color: "var(--text-secondary)", marginTop: "4px", display: "flex", alignItems: "center", gap: "8px" }}>
                         <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: connected ? "var(--accent-primary)" : "#ef4444", display: "inline-block" }} />
-                        {useWS ? "WS_PROTOCOL_ACTIVE" : "REST_API_FALLBACK"} | SESSION_{sessionId.slice(0, 8)}
+                        {enableWebSocketMode && useWS ? "WS_PROTOCOL_ACTIVE" : "REST_API_FALLBACK"} | SESSION_{sessionId.slice(0, 8)}
                     </div>
                 </div>
                 <div style={{ display: "flex", gap: "12px" }}>
-                    <button onClick={() => setUseWS(v => !v)} className="glass-card mono" style={btnStyle}>
-                        {useWS ? "MODE: REST" : "MODE: WS"}
-                    </button>
+                    {enableWebSocketMode && (
+                        <button onClick={() => setUseWS(v => !v)} className="glass-card mono" style={btnStyle}>
+                            {useWS ? "MODE: REST" : "MODE: WS"}
+                        </button>
+                    )}
                     <button onClick={handleClear} className="glass-card mono" style={{ ...btnStyle, color: "#f87171" }}>
                         CLEAR_LOGS
                     </button>
