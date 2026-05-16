@@ -17,36 +17,14 @@ export default function VoiceRecorder({ onAudioReady, disabled }) {
         }
     }, [audioBlob, onAudioReady, resetRecording]);
 
-    // Attach touch events manually with passive:false so preventDefault works
-    useEffect(() => {
-        const btn = btnRef.current;
-        if (!btn) return;
-
-        const handleTouchStart = (e) => {
-            e.preventDefault();
-            if (!disabled) startRecording();
-        };
-        const handleTouchEnd = (e) => {
-            e.preventDefault();
+    const handleClick = useCallback(() => {
+        if (disabled) return;
+        if (isRecording) {
             stopRecording();
-        };
-
-        btn.addEventListener("touchstart", handleTouchStart, { passive: false });
-        btn.addEventListener("touchend", handleTouchEnd, { passive: false });
-
-        return () => {
-            btn.removeEventListener("touchstart", handleTouchStart);
-            btn.removeEventListener("touchend", handleTouchEnd);
-        };
-    }, [disabled, startRecording, stopRecording]);
-
-    const handleMouseDown = useCallback(() => {
-        if (!disabled) startRecording();
-    }, [disabled, startRecording]);
-
-    const handleMouseUp = useCallback(() => {
-        stopRecording();
-    }, [stopRecording]);
+        } else {
+            startRecording();
+        }
+    }, [disabled, isRecording, startRecording, stopRecording]);
 
     return (
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "20px" }}>
@@ -86,9 +64,7 @@ export default function VoiceRecorder({ onAudioReady, disabled }) {
                 
                 <button
                     ref={btnRef}
-                    onMouseDown={handleMouseDown}
-                    onMouseUp={handleMouseUp}
-                    onMouseLeave={handleMouseUp}
+                    onClick={handleClick}
                     disabled={disabled}
                     className="glass-card"
                     style={{
@@ -128,7 +104,7 @@ export default function VoiceRecorder({ onAudioReady, disabled }) {
             </div>
 
             <p className="mono" style={{ fontSize: "10px", color: isRecording ? "var(--accent-primary)" : "var(--text-secondary)", letterSpacing: "1px", opacity: 0.6 }}>
-                {isRecording ? "TRANSMITTING..." : "HOLD_TO_INITIALIZE"}
+                {isRecording ? "CLICK_TO_SEND" : "CLICK_TO_RECORD"}
             </p>
 
             {error && (
@@ -138,4 +114,4 @@ export default function VoiceRecorder({ onAudioReady, disabled }) {
             )}
         </div>
     );
-}
+}

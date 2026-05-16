@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, HTTPException
 from app.services.stt_service import transcribe_audio
 from app.api.models.response_models import TranscriptResponse
 import uuid
@@ -8,7 +8,7 @@ router = APIRouter()
 @router.post("/transcribe", response_model=TranscriptResponse)
 async def transcribe(
     audio: UploadFile = File(...),
-    session_id: str = None
+    session_id: str = Form(None)
 ):
     audio_bytes = await audio.read()
 

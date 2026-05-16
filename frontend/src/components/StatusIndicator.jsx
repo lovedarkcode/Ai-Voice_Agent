@@ -1,4 +1,4 @@
-export default function StatusIndicator({ status }) {
+export default function StatusIndicator({ status, detail }) {
     const states = {
         idle: { color: "var(--accent-primary)", label: "SYSTEM_READY", opacity: 0.5 },
         recording: { color: "#ef4444", label: "AUDIO_INPUT_ACTIVE", opacity: 1 },
@@ -13,6 +13,7 @@ export default function StatusIndicator({ status }) {
     const shouldPulse = status !== "idle";
 
     return (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }}>
         <div className="glass-card mono" style={{
             display: "flex", alignItems: "center", gap: "12px",
             padding: "8px 20px", borderRadius: "8px",
@@ -34,5 +35,18 @@ export default function StatusIndicator({ status }) {
                 {cur.label}
             </span>
         </div>
+        {detail && (
+            <p className="mono" style={{
+                maxWidth: "520px",
+                color: "#fca5a5",
+                fontSize: "10px",
+                lineHeight: 1.5,
+                textAlign: "center",
+                letterSpacing: "0.5px",
+            }}>
+                {detail}
+            </p>
+        )}
+        </div>
     );
-}
+}

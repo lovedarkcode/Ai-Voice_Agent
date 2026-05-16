@@ -8,6 +8,7 @@ export default function useAudioRecorder() {
     const mediaRecorderRef = useRef(null);
     const chunksRef = useRef([]);
     const streamRef = useRef(null);
+    const mimeTypeRef = useRef("audio/webm");
 
     const startRecording = useCallback(async () => {
         setError(null);
@@ -21,6 +22,7 @@ export default function useAudioRecorder() {
             const options = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
                 ? { mimeType: "audio/webm;codecs=opus" }
                 : { mimeType: "audio/webm" };
+            mimeTypeRef.current = options.mimeType;
 
             const recorder = new MediaRecorder(stream, options);
             mediaRecorderRef.current = recorder;
@@ -30,8 +32,12 @@ export default function useAudioRecorder() {
             };
 
             recorder.onstop = () => {
-                const blob = new Blob(chunksRef.current, { type: options.mimeType });
-                setAudioBlob(blob);
+                const blob = new Blob(chunksRef.current, { type: mimeTypeRef.current });
+                if (blob.size > 0) {
+                    setAudioBlob(blob);
+                } else {
+                    setError("No audio was captured. Click once to start, speak, then click again to send.");
+                }
                 // Stop all mic tracks so the browser mic indicator turns off
                 stream.getTracks().forEach((t) => t.stop());
             };
@@ -48,8 +54,10 @@ export default function useAudioRecorder() {
     }, []);
 
     const stopRecording = useCallback(() => {
-        if (mediaRecorderRef.current && isRecording) {
-            mediaRecorderRef.current.stop();
+        const recorder = mediaRecorderRef.current;
+        if (recorder && isRecording && recorder.state !== "inactive") {
+            recorder.requestData();
+            recorder.stop();
             setIsRecording(false);
         }
     }, [isRecording]);

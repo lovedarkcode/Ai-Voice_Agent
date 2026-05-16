@@ -13,6 +13,7 @@ export default function AgentPage() {
     const [messages, setMessages] = useState([]);
     const [audioUrl, setAudioUrl] = useState(null);
     const [useWS, setUseWS] = useState(false); // start in REST mode — safer default
+    const [errorMessage, setErrorMessage] = useState("");
 
     const addMessage = (role, content) =>
         setMessages(prev => [...prev, { id: uuidv4(), role, content, timestamp: Date.now() }]);
@@ -42,6 +43,7 @@ export default function AgentPage() {
             case "tts_ready": setStatus("playing"); break;
             case "audio_blob": setAudioUrl(URL.createObjectURL(msg.blob)); break;
             case "error":
+                setErrorMessage(msg.message || "Backend request failed.");
                 setStatus("error");
                 setTimeout(() => setStatus("idle"), 3000);
                 break;
@@ -51,11 +53,15 @@ export default function AgentPage() {
 
     const { connected, sendAudio } = useWebSocket(useWS ? sessionId : null, {
         onMessage: handleWsMessage,
-        onError: () => setStatus("error"),
+        onError: () => {
+            setErrorMessage("WebSocket connection failed.");
+            setStatus("error");
+        },
     });
 
     // ── Audio ready ────────────────────────────────────────────────────────────
     const handleAudioReady = useCallback(async (blob) => {
+        setErrorMessage("");
         if (useWS && connected) {
             setStatus("transcribing");
             sendAudio(blob);
@@ -76,8 +82,11 @@ export default function AgentPage() {
             setStatus("playing");
         } catch (err) {
             console.error(err);
+            const detail = err.response?.data?.detail || err.message || "Backend request failed.";
+            setErrorMessage(detail);
+            addMessage("assistant", `Request failed: ${detail}`);
             setStatus("error");
-            setTimeout(() => setStatus("idle"), 3000);
+            setTimeout(() => setStatus("idle"), 5000);
         }
     }, [useWS, connected, sendAudio, sessionId]);
 
@@ -145,7 +154,7 @@ export default function AgentPage() {
 
                 {/* Status and Controls */}
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "24px" }}>
-                    <StatusIndicator status={status} />
+                    <StatusIndicator status={status} detail={errorMessage} />
                     
                     <div style={{ position: "relative" }}>
                         {/* Decorative Rings */}
@@ -178,4 +187,4 @@ const btnStyle = {
     background: "rgba(255,255,255,0.03)", color: "var(--text-secondary)",
     cursor: "pointer", transition: "all 0.3s ease",
     letterSpacing: "1px"
-};
+};
